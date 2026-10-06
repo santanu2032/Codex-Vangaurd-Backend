@@ -1,0 +1,30 @@
+{
+  "name": "codex-vanguard-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/santanu2032/Codex-Vangaurd-Backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/santanu2032/Codex-Vangaurd-Backend/issues"
+  },
+  "homepage": "https://github.com/santanu2032/Codex-Vangaurd-Backend#readme",
+  "dependencies": {
+    "express": "^5.2.1",
+    "firebase-admin": "^14.5.0"
+  },
+  "allowScripts": {
+    "@firebase/util@1.15.3": true,
+    "protobufjs@7.6.6": true
+  }
+}
