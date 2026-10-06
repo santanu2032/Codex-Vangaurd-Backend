@@ -1,5 +1,7 @@
 const express = require('express');
-const admin = require('firebase-admin');
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
+const { getMessaging } = require('firebase-admin/messaging');
 
 // 1. Initialize Express (Required to keep Render awake)
 const app = express();
@@ -17,11 +19,11 @@ if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
 
 const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount)
+initializeApp({
+    credential: cert(serviceAccount)
 });
 
-const db = admin.firestore();
+const db = getFirestore();
 
 // 3. Database Listener
 console.log("Starting Firestore listener for 'server_data' collection...");
@@ -38,7 +40,6 @@ db.collection('server_data').onSnapshot((snapshot) => {
             const message = {
                 notification: {
                     title: "New Upload Available",
-                    // Safely extract the fileName field you defined in your database
                     body: `Subject: ${documentData.subject || 'Update'} - ${documentData.fileName || 'New file'}`
                 },
                 // Using a topic is the easiest way to notify all users at once
@@ -46,7 +47,7 @@ db.collection('server_data').onSnapshot((snapshot) => {
             };
 
             // 5. Send the Notification via FCM
-            admin.messaging().send(message)
+            getMessaging().send(message)
                 .then((response) => {
                     console.log("Successfully sent notification:", response);
                 })
