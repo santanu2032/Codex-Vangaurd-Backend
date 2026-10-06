@@ -1,0 +1,65 @@
+const express = require('express');
+const admin = require('firebase-admin');
+
+// 1. Initialize Express (Required to keep Render awake)
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/ping', (req, res) => {
+    res.status(200).send('Codex Vanguard Backend is awake');
+});
+
+// 2. Initialize Firebase Admin SDK
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+    console.error("FATAL ERROR: FIREBASE_SERVICE_ACCOUNT environment variable is missing.");
+    process.exit(1);
+}
+
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount)
+});
+
+const db = admin.firestore();
+
+// 3. Database Listener
+console.log("Starting Firestore listener for 'server_data' collection...");
+
+db.collection('server_data').onSnapshot((snapshot) => {
+    snapshot.docChanges().forEach((change) => {
+
+        // Only trigger on newly added documents, not modified or deleted ones
+        if (change.type === 'added') {
+            const documentData = change.doc.data();
+            console.log("New document detected:", documentData.id);
+
+            // 4. Construct the Push Notification
+            const message = {
+                notification: {
+                    title: "New Upload Available",
+                    // Safely extract the fileName field you defined in your database
+                    body: `Subject: ${documentData.subject || 'Update'} - ${documentData.fileName || 'New file'}`
+                },
+                // Using a topic is the easiest way to notify all users at once
+                topic: "global_updates"
+            };
+
+            // 5. Send the Notification via FCM
+            admin.messaging().send(message)
+                .then((response) => {
+                    console.log("Successfully sent notification:", response);
+                })
+                .catch((error) => {
+                    console.error("Error sending notification:", error);
+                });
+        }
+    });
+}, (error) => {
+    console.error("Error listening to Firestore:", error);
+});
+
+// 6. Start the Server
+app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+});
