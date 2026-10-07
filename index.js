@@ -28,7 +28,16 @@ const db = getFirestore();
 // 3. Database Listener
 console.log("Starting Firestore listener for 'server_data' collection...");
 
+let isFirstSnapshot = true;
+
 db.collection('server_data').onSnapshot((snapshot) => {
+    // Skip the initial load so old docs don't trigger notifications
+    if (isFirstSnapshot) {
+        isFirstSnapshot = false;
+        console.log(`Initial snapshot loaded (${snapshot.size} existing docs), skipping notifications.`);
+        return;
+    }
+
     snapshot.docChanges().forEach((change) => {
 
         // Only trigger on newly added documents, not modified or deleted ones
@@ -42,7 +51,10 @@ db.collection('server_data').onSnapshot((snapshot) => {
                     title: "New Upload Available",
                     body: `Subject: ${documentData.subject || 'Update'} - ${documentData.fileName || 'New file'}`
                 },
-                // Using a topic is the easiest way to notify all users at once
+                android: {
+                    priority: "high",
+                    notification: { channelId: "global_updates_channel" }
+                },
                 topic: "global_updates"
             };
 
